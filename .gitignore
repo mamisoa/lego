@@ -166,3 +166,5 @@ cython_debug/
 
 # Exclure tous les fichiers service.json
 **/service.json
+
+secrets/
