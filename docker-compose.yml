@@ -1,0 +1,57 @@
+version: "3.7"
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ${PYSCRIPT_DIR}
+    networks:
+      - mynetwork
+
+  fastapi:
+    build:
+      context: ./fastapi
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./fastapi:/app
+    environment:
+      - ENV=production
+    networks:
+      - mynetwork
+  
+  gmail:
+    build:
+      context: ./gmail
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./gmail:/app
+      -  ${SECRETS_DIR}:/app/secrets
+    environment:
+      - ENV=production
+      - SECRETS_DIR=/app/secrets
+      - GOOGLE_SERVICE_CREDENTIALS=/app/secrets/service.json
+      - GOOGLE_AUTH_CREDENTIALS=/app/secrets/credentials.json
+      - DEFAULT_EMAIL=${DEFAULT_EMAIL}
+    networks:
+      - mynetwork
+
+volumes:
+  n8n_data:
+    external: true
+
+networks:
+  mynetwork:
+    driver: bridge
