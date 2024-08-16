@@ -1,0 +1,153 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Receipt</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 20px;
+                }
+                .receipt-container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    border: 1px solid #ddd;
+                    padding: 20px;
+                    border-radius: 8px;
+                }
+                .receipt-header, .receipt-footer {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .receipt-header h2, .receipt-footer h3 {
+                    margin: 0;
+                }
+                .receipt-details {
+                    margin-bottom: 20px;
+                }
+                .receipt-details p {
+                    margin: 5px 0;
+                }
+                .items-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                }
+                .items-table th, .items-table td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: left;
+                }
+                .items-table th {
+                    background-color: #f2f2f2;
+                }
+                .total-summary {
+                    margin-top: 20px;
+                    text-align: right;
+                }
+                .total-summary p {
+                    margin: 5px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="receipt-container">
+                <!-- Receipt Header -->
+                <div class="receipt-header">
+                    <h2>TEO HENG STATIONERY & BOOKS</h2>
+                    <p>19, JALAN SS21/37 DAMANSARA UPTOWN
+47400 PETALING JAYA</p>
+                    <p>Contact: 03-7728 5272</p>
+                    
+                    
+                </div>
+
+                <!-- Receipt Details -->
+                <div class="receipt-details">
+                    <p><strong>Date:</strong> 2023-10-26</p>
+                    <p><strong>Time:</strong> 16:39:12</p>
+                    <p><strong>Invoice Number:</strong> CS1801/21775</p>
+                    <p><strong>Order Number:</strong> </p>
+                    <p><strong>Currency:</strong> RM</p>
+                </div>
+
+                <!-- Item Details -->
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Discount</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        
+                        <tr>
+                            <td>DOUBLE SIDE FOAM TAPE 18MM</td>
+                            <td>Stationery & Office Supplies</td>
+                            <td>1</td>
+                            <td>3.96</td>
+                            <td>4.09</td>
+                            <td>3.8</td>
+                        </tr>
+            
+                        <tr>
+                            <td>CAMIS SO BOOK 200</td>
+                            <td>Stationery & Office Supplies</td>
+                            <td>5</td>
+                            <td>2.74</td>
+                            <td>4.96</td>
+                            <td>13.0</td>
+                        </tr>
+            
+                        <tr>
+                            <td>EAGLE F4 200 FOOLSCAP BOOK</td>
+                            <td>Stationery & Office Supplies</td>
+                            <td>1</td>
+                            <td>5.47</td>
+                            <td>4.96</td>
+                            <td>5.2</td>
+                        </tr>
+            
+                        <tr>
+                            <td>EAGLE F4 120 NUMBERING FOOLSCAP BOOK</td>
+                            <td>Stationery & Office Supplies</td>
+                            <td>1</td>
+                            <td>3.96</td>
+                            <td>4.09</td>
+                            <td>3.8</td>
+                        </tr>
+            
+                    </tbody>
+                </table>
+
+                <!-- Total Summary -->
+                <div class="total-summary">
+                    <p><strong>Subtotal (Before Tax):</strong> 25.8</p>
+                    <p><strong>Discount:</strong> 0.0</p>
+                    <p><strong>GST:</strong> 1.55</p>
+                    <p><strong>Total (After Tax):</strong> 27.35</p>
+                    
+                    <p><strong>Total Paid Amount:</strong> 27.35</p>
+                    <p><strong>Payment Method:</strong> Cash</p>
+                </div>
+
+                <!-- GST Summary -->
+                <div class="gst-summary">
+                    
+                    
+                </div>
+
+                <!-- Receipt Footer -->
+                <div class="receipt-footer">
+                    <h3>Thank you for your purchase!</h3>
+                </div>
+            </div>
+        </body>
+        </html>
+        
