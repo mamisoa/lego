@@ -1,6 +1,9 @@
 # main.py
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi import Request, BackgroundTasks
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse, HTMLResponse
+import httpx
 from pydantic import BaseModel
 from typing import List, Optional
 import os
@@ -198,6 +201,42 @@ async def generate_ticket(ticket_data: List[TicketData]):
             file.write(html)
 
     return {"message": "HTML ticket generated successfully!"}
+
+# Utiliser Jinja2 pour gérer les templates HTML
+templates = Jinja2Templates(directory="templates")
+
+# URL cible pour le POST
+# WEBHOOK_URL = "https://n8.c54.ovh/webhook-test/9bc9b752-c660-41ac-9294-99e5e0f12b03"
+WEBHOOK_URL= "https://n8.c54.ovh/webhook/9bc9b752-c660-41ac-9294-99e5e0f12b03"
+
+@app.get("/uploadTicket", response_class=HTMLResponse)
+async def upload_ticket_form(request: Request):
+    return templates.TemplateResponse("upload_ticket.html", {"request": request})
+
+@app.post("/uploadTicket")
+async def upload_ticket(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    # Vérifier si le fichier est bien un JPG
+    if file.content_type != "image/jpeg":
+        return HTMLResponse(content="Invalid file type. Only JPG images are accepted.", status_code=400)
+
+    # Lire le contenu du fichier une seule fois ici
+    file_content = await file.read()
+
+    # Envoyer le fichier en arrière-plan pour ne pas bloquer la réponse
+    background_tasks.add_task(send_file_to_webhook, file.filename, file_content, file.content_type)
+
+    # Retourner la réponse HTML
+    return templates.TemplateResponse("upload_ticket.html", {
+        "request": request,
+        "message": "File uploaded successfully and sent to the webhook!"
+    })
+
+async def send_file_to_webhook(filename: str, content: bytes, content_type: str):
+    # Envoyer le fichier au webhook en POST
+    async with httpx.AsyncClient() as client:
+        files = {'file': (filename, content, content_type)}
+        response = await client.post(WEBHOOK_URL, files=files)
+        response.raise_for_status()
 
 @app.get("/viewTicket")
 async def view_ticket():

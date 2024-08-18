@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n
+    image: docker.n8n.io/n8nio/n8n:1.55.3
     restart: always
     ports:
       - "5678:5678"

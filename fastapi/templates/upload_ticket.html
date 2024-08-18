@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Ticket</title>
+</head>
+<body>
+    <h1>Upload Ticket</h1>
+
+    <form action="/uploadTicket" method="post" enctype="multipart/form-data">
+        <label for="file">Choose a JPG file:</label>
+        <input type="file" id="file" name="file" accept=".jpg" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if message %}
+        <div style="margin-top: 20px; color: green;">
+            {{ message }}
+        </div>
+    {% endif %}
+
+    <div style="margin-top: 20px;">
+        <a href="http://192.168.68.202:8000/viewTicket">View Ticket</a>
+    </div>
+</body>
+</html>
