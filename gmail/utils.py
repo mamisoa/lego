@@ -12,6 +12,7 @@ from google.oauth2 import service_account
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the token.json file.
 SCOPES = [
@@ -395,74 +396,80 @@ def get_new_email(
     subject_email: str,
     ai_label_id: str = "Label_15",
     query: str = "from: secretaire@ophtalmologiste.be is:unread",
-    maxResult: int = 5,
     mark_as_read: bool = False,
 ):
     """
-    Retrieves new (unread) emails from secretaire@ophtalmologiste.be, including title, content in raw text,
+    Retrieves all new (unread) emails from secretaire@ophtalmologiste.be, including title, content in raw text,
     and any .ics file attachments in base64. Optionally marks retrieved emails as read.
 
     Args:
         subject_email (str): The email used to authenticate and use the Gmail API service.
         ai_label_id (str): The Gmail label ID to add to emails that don't already have it.
         query (str): The query to filter the emails.
-        maxResult (int): The maximum number of emails to retrieve.
-        mark_as_read (bool): Whether to mark the retrieved emails as read. Defaults to True.
+        mark_as_read (bool): Whether to mark the retrieved emails as read.
 
     Returns:
         A JSON formatted string containing details of new emails.
     """
     service = get_service(subject_email=subject_email)
 
-    # Query for unread emails from the specific sender
-    result = (
-        service.users()
-        .messages()
-        .list(userId="me", q=query, maxResults=maxResult)
-        .execute()
-    )
-    messages = result.get("messages", [])
-
     emails_info = []
+    next_page_token = None
 
-    for msg in messages:
-        msg_id = msg["id"]
-        message = (
+    while True:
+        # Query for unread emails from the specific sender
+        result = (
             service.users()
             .messages()
-            .get(userId="me", id=msg_id, format="raw")
+            .list(userId="me", q=query, pageToken=next_page_token)
             .execute()
         )
+        messages = result.get("messages", [])
+        next_page_token = result.get("nextPageToken")
 
-        # Decode email bytes and parse to MIME message
-        msg_raw = base64.urlsafe_b64decode(message["raw"].encode("ASCII"))
-        mime_msg = message_from_bytes(msg_raw)
+        for msg in messages:
+            msg_id = msg["id"]
+            message = (
+                service.users()
+                .messages()
+                .get(userId="me", id=msg_id, format="raw")
+                .execute()
+            )
 
-        email_data = {
-            "title": decode_mime_words(mime_msg["Subject"]),
-            "content": extract_email_content(mime_msg),
-            "attachment_ics": extract_email_ics(
-                mime_msg
-            ),  # extract only if content_type is "text/calendar"
-        }
+            # Decode email bytes and parse to MIME message
+            msg_raw = base64.urlsafe_b64decode(message["raw"].encode("ASCII"))
+            mime_msg = message_from_bytes(msg_raw)
 
-        emails_info.append(email_data)
+            email_data = {
+                "msg_id": msg_id,
+                "title": decode_mime_words(mime_msg["Subject"]),
+                "content": extract_email_content(mime_msg),
+                "attachment_ics": extract_email_ics(
+                    mime_msg
+                ),  # extract only if content_type is "text/calendar"
+            }
 
-        # Check current labels and add 'ai_label_id' if not present
-        existing_labels = message.get("labelIds", [])
-        if ai_label_id not in existing_labels:
-            body = {"addLabelIds": [ai_label_id]}  # Add a custom label by its ID
-            service.users().messages().modify(
-                userId="me", id=msg_id, body=body
-            ).execute()
-        
-        # Mark as read if the mark_as_read flag is True
-        if mark_as_read:
-            service.users().messages().modify(
-                userId="me", id=msg_id, body={"removeLabelIds": ["UNREAD"]}
-            ).execute()
+            emails_info.append(email_data)
+
+            # Check current labels and add 'ai_label_id' if not present
+            existing_labels = message.get("labelIds", [])
+            if ai_label_id not in existing_labels:
+                body = {"addLabelIds": [ai_label_id]}  # Add a custom label by its ID
+                service.users().messages().modify(
+                    userId="me", id=msg_id, body=body
+                ).execute()
+            
+            # Mark as read if the mark_as_read flag is True
+            if mark_as_read:
+                service.users().messages().modify(
+                    userId="me", id=msg_id, body={"removeLabelIds": ["UNREAD"]}
+                ).execute()
+
+        if not next_page_token:
+            break
 
     return json.dumps(emails_info, indent=4, ensure_ascii=False)
+
 
 def create_draft_email(subject: str,
                      content: str = "<html><body><p>Bonjour, <\br> nous allons répondre à votre email dans les plus brefs délais.</p></body></html>",
@@ -516,3 +523,48 @@ def create_draft_email(subject: str,
     updated_draft = service.users().drafts().update(userId="me", id=draft_id, body=updated_draft_body).execute()
     
     return updated_draft
+
+def delete_email_by_id(subject_email: str, message_id: str):
+    """
+    Deletes an email from the user's mailbox using its message ID.
+
+    Args:
+        subject_email (str): The email used to authenticate and use the Gmail API service.
+        message_id (str): The ID of the email message to be deleted.
+
+    Returns:
+        A JSON formatted string indicating success or failure with relevant details.
+    """
+    try:
+        # Get the service object for the Gmail API
+        service = get_service(subject_email=subject_email)
+        
+        # Delete the email using the message ID
+        service.users().messages().delete(userId="me", id=message_id).execute()
+
+        # Return success response
+        response = {
+            "status": "success",
+            "message": f"Email with ID {message_id} has been successfully deleted.",
+            "message_id": message_id,
+        }
+
+    except HttpError as error:
+        # Handle HTTP errors from the Gmail API
+        response = {
+            "status": "error",
+            "message": f"Failed to delete email with ID {message_id}.",
+            "error_details": str(error),
+            "message_id": message_id,
+        }
+
+    except Exception as e:
+        # Handle any other exceptions
+        response = {
+            "status": "error",
+            "message": f"An unexpected error occurred while trying to delete the email with ID {message_id}.",
+            "error_details": str(e),
+            "message_id": message_id,
+        }
+
+    return json.dumps(response, indent=4, ensure_ascii=False)
